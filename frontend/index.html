@@ -1,0 +1,444 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Discord AI Dashboard - Full Control</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font-family: 'Segoe UI', system-ui, sans-serif; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #1a1a1a; 
+        padding: 20px;
+        min-height: 100vh;
+      }
+      .container { max-width: 1400px; margin: 0 auto; }
+      h1 { color: white; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+      h2 { color: #667eea; margin-top: 20px; margin-bottom: 10px; font-size: 18px; }
+      .card { 
+        background: white; 
+        padding: 16px; 
+        border-radius: 10px; 
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+      button { 
+        padding: 8px 14px; 
+        border-radius: 6px; 
+        border: none; 
+        cursor: pointer;
+        background: #667eea;
+        color: white;
+        font-weight: 500;
+        transition: all 0.2s;
+        margin-right: 6px;
+        margin-bottom: 6px;
+      }
+      button:hover { background: #764ba2; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+      button.danger { background: #f56565; }
+      button.danger:hover { background: #e53e3e; }
+      button.success { background: #48bb78; }
+      button.success:hover { background: #38a169; }
+      input, textarea, select { 
+        padding: 8px 10px; 
+        border: 1px solid #ddd; 
+        border-radius: 6px; 
+        font-family: inherit;
+        margin: 6px 0;
+        width: 100%;
+      }
+      input:focus, textarea:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+      textarea { resize: vertical; min-height: 80px; }
+      pre { 
+        background: #f5f5f5; 
+        padding: 12px; 
+        border-radius: 6px; 
+        overflow-x: auto; 
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .metric { 
+        display: inline-block; 
+        background: #f0f0f0; 
+        padding: 8px 12px; 
+        border-radius: 4px; 
+        margin-right: 12px;
+        font-weight: 500;
+      }
+      .status-ok { color: #48bb78; }
+      .status-error { color: #f56565; }
+      .tabs { 
+        display: flex; 
+        border-bottom: 2px solid #ddd; 
+        margin-bottom: 12px;
+        gap: 10px;
+      }
+      .tab-btn { 
+        padding: 10px 16px; 
+        background: none; 
+        border: none; 
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        color: #666;
+        font-weight: 500;
+      }
+      .tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+      .info-box { 
+        background: #e6f2ff; 
+        border-left: 4px solid #667eea; 
+        padding: 10px 12px; 
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🤖 Discord AI Chatbot Dashboard</h1>
+      
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('engine')">🔧 Engine</button>
+        <button class="tab-btn" onclick="switchTab('personality')">🎭 Personality</button>
+        <button class="tab-btn" onclick="switchTab('memory')">💾 Memory</button>
+        <button class="tab-btn" onclick="switchTab('image')">🖼️ Images</button>
+        <button class="tab-btn" onclick="switchTab('relationships')">👥 Relationships</button>
+        <button class="tab-btn" onclick="switchTab('monitoring')">📊 Monitoring</button>
+        <button class="tab-btn" onclick="switchTab('language')">🌐 Language</button>
+        <button class="tab-btn" onclick="switchTab('plugins')">🔌 Plugins</button>
+        <button class="tab-btn" onclick="switchTab('config')">⚙️ Config</button>
+      </div>
+
+      <!-- ENGINE TAB -->
+      <div id="engine" class="tab-content active">
+        <div class="card">
+          <h2>AI Engine</h2>
+          <div class="info-box">Current Engine: <strong id="engine-name">-</strong> | Status: <span class="status-ok" id="engine-status">●</span></div>
+          <button onclick="switchEngine('ollama')">🖥️ Switch to Ollama (Local)</button>
+          <button onclick="switchEngine('openai')">☁️ Switch to OpenAI (Cloud)</button>
+          <hr style="margin: 10px 0;">
+          <h3>Generate Text</h3>
+          <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
+          <button class="success" onclick="generate()">Generate</button>
+          <pre id="gen-output"></pre>
+        </div>
+      </div>
+
+      <!-- PERSONALITY TAB -->
+      <div id="personality" class="tab-content">
+        <div class="card">
+          <h2>Personality & Mood</h2>
+          <div>Server ID: <input id="server_id" placeholder="server-id" style="width: 200px;"/></div>
+          <div>
+            <label>Mood:</label>
+            <select id="mood">
+              <option value="happy">😊 Happy</option>
+              <option value="neutral">😐 Neutral</option>
+              <option value="sad">😢 Sad</option>
+              <option value="angry">😠 Angry</option>
+              <option value="playful">😄 Playful</option>
+              <option value="focused">🎯 Focused</option>
+            </select>
+          </div>
+          <button class="success" onclick="setMood()">Set Mood</button>
+          <hr style="margin: 10px 0;">
+          <h3>Current Profile</h3>
+          <pre id="profile-out"></pre>
+        </div>
+      </div>
+
+      <!-- MEMORY TAB -->
+      <div id="memory" class="tab-content">
+        <div class="card">
+          <h2>Memory Management</h2>
+          <div class="grid">
+            <div>
+              <label>Owner ID:</label>
+              <input id="mem_owner" placeholder="user-id or server-id"/>
+            </div>
+            <div>
+              <label>Key:</label>
+              <input id="mem_key" placeholder="memory key"/>
+            </div>
+          </div>
+          <label>Value:</label>
+          <textarea id="mem_value" placeholder="memory value"></textarea>
+          <button class="success" onclick="addMemory()">💾 Save Memory</button>
+          <button onclick="listMemory()">📋 List Memories</button>
+          <button class="danger" onclick="exportMemory()">⬇️ Export</button>
+          <hr style="margin: 10px 0;">
+          <pre id="mem-out"></pre>
+        </div>
+      </div>
+
+      <!-- IMAGE TAB -->
+      <div id="image" class="tab-content">
+        <div class="card">
+          <h2>Image Generation</h2>
+          <label>Prompt:</label>
+          <textarea id="image_prompt" placeholder="Describe the image you want..."></textarea>
+          <label>Style:</label>
+          <select id="image_style">
+            <option value="default">Default</option>
+            <option value="anime">Anime</option>
+            <option value="oil-painting">Oil Painting</option>
+            <option value="photography">Photography</option>
+          </select>
+          <button class="success" onclick="generateImage()">🎨 Generate Image</button>
+          <div id="image-out"></div>
+        </div>
+      </div>
+
+      <!-- RELATIONSHIPS TAB -->
+      <div id="relationships" class="tab-content">
+        <div class="card">
+          <h2>Relationship Scoring</h2>
+          <div>User ID: <input id="rel_user_id" placeholder="user-id" style="width: 200px;"/></div>
+          <button onclick="getRelationship()">📊 Get Score</button>
+          <button onclick="exportRelationships()">⬇️ Export All</button>
+          <hr style="margin: 10px 0;">
+          <pre id="rel-out"></pre>
+        </div>
+      </div>
+
+      <!-- MONITORING TAB -->
+      <div id="monitoring" class="tab-content">
+        <div class="card">
+          <h2>System Health & Monitoring</h2>
+          <div id="metrics-display"></div>
+          <hr style="margin: 10px 0;">
+          <button onclick="refreshHealth()">🔄 Refresh Health</button>
+          <button class="danger" onclick="restartBot()">🔁 Restart Bot</button>
+          <hr style="margin: 10px 0;">
+          <h3>Recent Logs</h3>
+          <button onclick="getLogs(10)">Last 10 Logs</button>
+          <button onclick="getLogs(50)">Last 50 Logs</button>
+          <pre id="logs-out"></pre>
+        </div>
+      </div>
+
+      <!-- LANGUAGE TAB -->
+      <div id="language" class="tab-content">
+        <div class="card">
+          <h2>Language Settings</h2>
+          <button onclick="listLanguages()">📜 List Languages</button>
+          <hr style="margin: 10px 0;">
+          <h3>Set Server Language</h3>
+          <div>Server ID: <input id="lang_server_id" placeholder="server-id" style="width: 200px;"/></div>
+          <div>Language: <input id="lang_code" placeholder="en, es, fr, de, ja" style="width: 200px;"/></div>
+          <button class="success" onclick="setServerLanguage()">Set</button>
+          <hr style="margin: 10px 0;">
+          <pre id="lang-out"></pre>
+        </div>
+      </div>
+
+      <!-- PLUGINS TAB -->
+      <div id="plugins" class="tab-content">
+        <div class="card">
+          <h2>Plugin System</h2>
+          <button onclick="listPlugins()">📦 List Plugins</button>
+          <hr style="margin: 10px 0;">
+          <h3>Load Plugin</h3>
+          <div>Plugin Name: <input id="plugin_name" placeholder="plugin-name" style="width: 200px;"/></div>
+          <button class="success" onclick="loadPlugin()">Load</button>
+          <hr style="margin: 10px 0;">
+          <pre id="plugin-out"></pre>
+        </div>
+      </div>
+
+      <!-- CONFIG TAB -->
+      <div id="config" class="tab-content">
+        <div class="card">
+          <h2>Environment Configuration</h2>
+          <button onclick="getEnv()">📋 Load Config</button>
+          <button class="success" onclick="reloadEnv()">🔄 Reload from .env</button>
+          <hr style="margin: 10px 0;">
+          <h3>Set Variable</h3>
+          <div>Key: <input id="env_key" placeholder="VARIABLE_NAME" style="width: 200px;"/></div>
+          <div>Value: <input id="env_value" placeholder="value"/></div>
+          <button class="success" onclick="setEnvVar()">Save</button>
+          <hr style="margin: 10px 0;">
+          <pre id="env-out"></pre>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      function switchTab(name) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(name).classList.add('active');
+        event.target.classList.add('active');
+      }
+
+      const ws = new WebSocket((location.protocol==='https:'?'wss://':'ws://') + location.host + '/ws');
+      ws.onopen = () => ws.send(JSON.stringify({action:'status'}));
+      ws.onmessage = (ev) => {
+        const data = JSON.parse(ev.data);
+        if (data.engine) { 
+          document.getElementById('engine-name').innerText = data.engine;
+        }
+      };
+
+      function switchEngine(name){ ws.send(JSON.stringify({action:'switch', name})); }
+      
+      async function generate(){
+        const text = document.getElementById('prompt').value;
+        if(!text) return alert('Enter a prompt');
+        const r = await fetch('/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+        const j = await r.json();
+        document.getElementById('gen-output').innerText = j.text || 'Error';
+      }
+
+      async function setMood(){
+        const server = document.getElementById('server_id').value;
+        const mood = document.getElementById('mood').value;
+        if(!server) return alert('set server id');
+        await fetch('/personality/' + server + '/mood', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({mood})});
+        const r = await fetch('/personality/' + server);
+        const j = await r.json();
+        document.getElementById('profile-out').innerText = JSON.stringify(j, null, 2);
+      }
+
+      async function addMemory(){
+        const owner = document.getElementById('mem_owner').value;
+        const key = document.getElementById('mem_key').value;
+        const value = document.getElementById('mem_value').value;
+        if(!owner || !key) return alert('owner and key required');
+        await fetch('/memory', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({owner,key,value})});
+        listMemory();
+      }
+
+      async function listMemory(){
+        const owner = document.getElementById('mem_owner').value;
+        if(!owner) return alert('owner required');
+        const r = await fetch('/memory/' + owner);
+        const j = await r.json();
+        document.getElementById('mem-out').innerText = JSON.stringify(j, null, 2);
+      }
+
+      async function exportMemory(){
+        const owner = document.getElementById('mem_owner').value;
+        if(!owner) return alert('owner required');
+        const r = await fetch('/memory/' + owner + '/export', {method:'POST'});
+        const j = await r.json();
+        document.getElementById('mem-out').innerText = j.data || JSON.stringify(j, null, 2);
+      }
+
+      async function generateImage(){
+        const prompt = document.getElementById('image_prompt').value;
+        const style = document.getElementById('image_style').value;
+        if(!prompt) return alert('Enter prompt');
+        const r = await fetch('/image/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({prompt,style})});
+        const j = await r.json();
+        if(j.ok && j.image_url) {
+          document.getElementById('image-out').innerHTML = '<img src="' + j.image_url + '" style="max-width:100%; border-radius:8px; margin-top:10px;"/>';
+        } else {
+          document.getElementById('image-out').innerText = 'Image generation failed or not available';
+        }
+      }
+
+      async function getRelationship(){
+        const uid = document.getElementById('rel_user_id').value;
+        if(!uid) return alert('user id required');
+        const r = await fetch('/relationship/' + uid);
+        const j = await r.json();
+        document.getElementById('rel-out').innerText = JSON.stringify(j, null, 2);
+      }
+
+      async function exportRelationships(){
+        const r = await fetch('/relationships/export');
+        const j = await r.json();
+        document.getElementById('rel-out').innerText = JSON.stringify(j.data, null, 2);
+      }
+
+      async function refreshHealth(){
+        const r = await fetch('/health');
+        const j = await r.json();
+        let html = `<div class="metric">Status: ${j.status}</div>`;
+        html += `<div class="metric">Uptime: ${j.uptime_human}</div>`;
+        html += `<div class="metric">Restarts: ${j.restart_count}</div>`;
+        document.getElementById('metrics-display').innerHTML = html;
+        const m = await fetch('/metrics').then(r => r.json());
+        document.getElementById('metrics-display').innerHTML += `
+          <div class="metric">CPU: ${m.cpu_percent.toFixed(1)}%</div>
+          <div class="metric">Memory: ${m.memory_percent.toFixed(1)}%</div>
+          <div class="metric">Disk: ${m.disk_percent.toFixed(1)}%</div>
+        `;
+      }
+
+      async function restartBot(){
+        if(!confirm('Restart the bot?')) return;
+        const r = await fetch('/restart', {method:'POST'});
+        const j = await r.json();
+        alert('Restart initiated: ' + JSON.stringify(j));
+      }
+
+      async function getLogs(n){
+        const r = await fetch('/logs?limit=' + n);
+        const j = await r.json();
+        document.getElementById('logs-out').innerText = JSON.stringify(j.logs, null, 2);
+      }
+
+      async function listLanguages(){
+        const r = await fetch('/languages');
+        const j = await r.json();
+        document.getElementById('lang-out').innerText = JSON.stringify(j, null, 2);
+      }
+
+      async function setServerLanguage(){
+        const sid = document.getElementById('lang_server_id').value;
+        const lang = document.getElementById('lang_code').value;
+        if(!sid || !lang) return alert('server id and language required');
+        const r = await fetch('/language/server/' + sid, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({language:lang})});
+        const j = await r.json();
+        alert('Set: ' + JSON.stringify(j));
+      }
+
+      async function listPlugins(){
+        const r = await fetch('/plugins');
+        const j = await r.json();
+        document.getElementById('plugin-out').innerText = JSON.stringify(j, null, 2);
+      }
+
+      async function loadPlugin(){
+        const name = document.getElementById('plugin_name').value;
+        if(!name) return alert('plugin name required');
+        const r = await fetch('/plugin/load/' + name, {method:'POST'});
+        const j = await r.json();
+        alert('Result: ' + JSON.stringify(j));
+        listPlugins();
+      }
+
+      async function getEnv(){
+        const r = await fetch('/env');
+        const j = await r.json();
+        document.getElementById('env-out').innerText = JSON.stringify(j, null, 2);
+      }
+
+      async function setEnvVar(){
+        const key = document.getElementById('env_key').value;
+        const value = document.getElementById('env_value').value;
+        if(!key || !value) return alert('key and value required');
+        const r = await fetch('/env/' + key, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({value})});
+        const j = await r.json();
+        alert('Result: ' + JSON.stringify(j));
+      }
+
+      async function reloadEnv(){
+        const r = await fetch('/env/reload', {method:'POST'});
+        const j = await r.json();
+        alert('Reloaded: ' + JSON.stringify(j));
+      }
+
+      // Auto-refresh health every 10 seconds
+      setInterval(refreshHealth, 10000);
+      refreshHealth();
+    </script>
+  </body>
+</html>

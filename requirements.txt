@@ -1,0 +1,9 @@
+fastapi>=0.95
+uvicorn[standard]>=0.22
+httpx>=0.24
+SQLAlchemy>=2.0
+aiosqlite>=0.18
+discord.py>=2.3
+python-dotenv>=1.0
+psutil>=5.9
+
