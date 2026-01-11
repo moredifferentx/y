@@ -81,7 +81,7 @@ async def plugin_unloaded_listener(plugin: str):
 
 
 # ==================================================
-# ✅ SAFE STARTUP HOOK (FIX)
+# ✅ SAFE STARTUP HOOK (FIXED)
 # ==================================================
 
 async def start_dashboard_ws():
@@ -95,7 +95,7 @@ async def start_dashboard_ws():
     await EVENT_BUS.subscribe("plugin.loaded", plugin_loaded_listener)
     await EVENT_BUS.subscribe("plugin.unloaded", plugin_unloaded_listener)
 
-    log("Dashboard WebSocket event listeners registered")
+    await log("Dashboard WebSocket event listeners registered")
 
 
 # ==================================================
@@ -105,7 +105,7 @@ async def start_dashboard_ws():
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     connections.append(ws)
-    log("Dashboard WebSocket connected")
+    await log("Dashboard WebSocket connected")
 
     engines = await ENGINE_REGISTRY.list()
 
@@ -139,4 +139,4 @@ async def websocket_endpoint(ws: WebSocket):
     except WebSocketDisconnect:
         if ws in connections:
             connections.remove(ws)
-        log("Dashboard WebSocket disconnected")
+        await log("Dashboard WebSocket disconnected")

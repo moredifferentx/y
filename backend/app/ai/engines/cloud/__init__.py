@@ -8,7 +8,7 @@ Supported:
 All other cloud modules in this directory are deprecated.
 """
 
-from app.monitoring import log
+from app.monitoring.logs import log_sync
 
 from .openai_engine import OpenAIEngine
 from .gemini_engine import GeminiEngine
@@ -20,14 +20,14 @@ def register_cloud_engines():
     This function is required by the engine bootstrap system.
     """
 
-    log("[ai] Registering cloud engines...")
+    log_sync("[ai] Registering cloud engines...")
 
     # Importing is enough if engines self-register
     _ = OpenAIEngine
-    log("[ai] OpenAI engine loaded")
+    log_sync("[ai] OpenAI engine loaded")
 
     _ = GeminiEngine
-    log("[ai] Gemini engine loaded")
+    log_sync("[ai] Gemini engine loaded")
 
 
 __all__ = [

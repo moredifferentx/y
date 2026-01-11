@@ -19,6 +19,7 @@ class EngineRouter:
     async def set_active(self, engine_id: str) -> None:
         """
         Set the active AI engine.
+        Must exist at startup.
         """
         engines = await ENGINE_REGISTRY.list()
         if engine_id not in engines:
@@ -32,12 +33,18 @@ class EngineRouter:
     async def set_fallback(self, engine_id: str) -> None:
         """
         Set the fallback AI engine.
+        Validation is deferred until fallback is actually used.
         """
+        self._fallback_engine_id = engine_id
+
         engines = await ENGINE_REGISTRY.list()
         if engine_id not in engines:
-            raise ValueError(f"Engine '{engine_id}' is not registered")
-
-        self._fallback_engine_id = engine_id
+            await log(
+                f"Warning: fallback engine '{engine_id}' "
+                f"is not registered yet (will validate on use)"
+            )
+        else:
+            await log(f"Fallback AI engine set to: {engine_id}")
 
     async def generate(
         self,
@@ -53,7 +60,9 @@ class EngineRouter:
 
         engine = await ENGINE_REGISTRY.get(self._active_engine_id)
         if not engine:
-            raise RuntimeError("Active AI engine not found")
+            raise RuntimeError(
+                f"Active AI engine '{self._active_engine_id}' not found"
+            )
 
         try:
             if not await engine.health_check():
@@ -73,7 +82,7 @@ class EngineRouter:
             fallback = await ENGINE_REGISTRY.get(self._fallback_engine_id)
             if not fallback:
                 raise RuntimeError(
-                    f"Fallback engine '{self._fallback_engine_id}' not found"
+                    f"Fallback engine '{self._fallback_engine_id}' not registered"
                 )
 
             await log(

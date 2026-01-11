@@ -1,9 +1,72 @@
+# ===============================
+# Core Web Framework
+# ===============================
 fastapi
-uvicorn
+uvicorn[standard]
+
+# ===============================
+# Discord Bot
+# ===============================
 discord.py
+
+# ===============================
+# System & Monitoring
+# ===============================
 psutil
+
+# ===============================
+# HTTP / Networking
+# ===============================
 httpx
+requests
+websockets
+
+# ===============================
+# AI / LLM Providers
+# ===============================
 openai
 google-generativeai
+tiktoken
+
+# ===============================
+# Environment & Config
+# ===============================
 python-dotenv
+
+# ===============================
+# Security / Crypto
+# ===============================
 cryptography
+python-jose
+passlib[bcrypt]
+
+# ===============================
+# Async / File / DB
+# ===============================
+aiofiles
+aiosqlite
+asyncio
+
+# ===============================
+# Database / Persistence
+# ===============================
+sqlalchemy
+
+# ===============================
+# Data Validation / Serialization
+# ===============================
+pydantic
+pydantic-settings
+orjson
+typing-extensions
+
+# ===============================
+# Scheduling / Background Tasks
+# ===============================
+apscheduler
+
+# ===============================
+# Logging / Developer UX
+# ===============================
+rich
+loguru
