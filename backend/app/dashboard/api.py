@@ -157,3 +157,10 @@ async def monitoring_health():
 @router.get("/monitoring/logs")
 async def monitoring_logs():
     return get_logs()
+
+
+# ==================================================
+# ✅ REQUIRED EXPORT (THIS FIXES YOUR ERROR)
+# ==================================================
+
+dashboard_api = router

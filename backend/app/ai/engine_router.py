@@ -20,7 +20,8 @@ class EngineRouter:
         """
         Set the active AI engine.
         """
-        if not ENGINE_REGISTRY.has(engine_id):
+        engines = await ENGINE_REGISTRY.list()
+        if engine_id not in engines:
             raise ValueError(f"Engine '{engine_id}' is not registered")
 
         self._active_engine_id = engine_id
@@ -32,7 +33,8 @@ class EngineRouter:
         """
         Set the fallback AI engine.
         """
-        if not ENGINE_REGISTRY.has(engine_id):
+        engines = await ENGINE_REGISTRY.list()
+        if engine_id not in engines:
             raise ValueError(f"Engine '{engine_id}' is not registered")
 
         self._fallback_engine_id = engine_id

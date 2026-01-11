@@ -7,17 +7,19 @@ from app.ai.engine_router import ENGINE_ROUTER
 from app.ai.engine_registry import ENGINE_REGISTRY
 from app.plugins import PLUGIN_MANAGER
 from app.cognition import Personality, MoodEngine
-from app.monitoring import get_hardware_stats, collect_engine_metrics, get_logs
-from app.monitoring import log
-log("Dashboard WebSocket connected")
-log("Dashboard WebSocket disconnected")
+from app.monitoring import (
+    get_hardware_stats,
+    collect_engine_metrics,
+    get_logs,
+    log,
+)
 
+# ==================================================
+# STATE
+# ==================================================
 
-
-# Active WS connections
 connections: List[WebSocket] = []
 
-# Shared cognition state (same pattern as api.py)
 PERSONALITY = Personality()
 MOOD = MoodEngine()
 
@@ -40,7 +42,7 @@ async def broadcast(payload: dict):
 
 
 # ==================================================
-# EVENT LISTENERS (INTERNAL → DASHBOARD)
+# EVENT LISTENERS
 # ==================================================
 
 async def engine_switch_listener(engine_id: str):
@@ -79,39 +81,31 @@ async def plugin_unloaded_listener(plugin: str):
 
 
 # ==================================================
-# REGISTER EVENT BUS SUBSCRIPTIONS
+# ✅ SAFE STARTUP HOOK (FIX)
 # ==================================================
 
-asyncio.create_task(
-    EVENT_BUS.subscribe("engine.switched", engine_switch_listener)
-)
+async def start_dashboard_ws():
+    """
+    Must be called during FastAPI startup.
+    Registers EventBus listeners safely.
+    """
+    await EVENT_BUS.subscribe("engine.switched", engine_switch_listener)
+    await EVENT_BUS.subscribe("cognition.personality.updated", personality_listener)
+    await EVENT_BUS.subscribe("cognition.mood.updated", mood_listener)
+    await EVENT_BUS.subscribe("plugin.loaded", plugin_loaded_listener)
+    await EVENT_BUS.subscribe("plugin.unloaded", plugin_unloaded_listener)
 
-asyncio.create_task(
-    EVENT_BUS.subscribe("cognition.personality.updated", personality_listener)
-)
-
-asyncio.create_task(
-    EVENT_BUS.subscribe("cognition.mood.updated", mood_listener)
-)
-
-asyncio.create_task(
-    EVENT_BUS.subscribe("plugin.loaded", plugin_loaded_listener)
-)
-
-asyncio.create_task(
-    EVENT_BUS.subscribe("plugin.unloaded", plugin_unloaded_listener)
-)
+    log("Dashboard WebSocket event listeners registered")
 
 
 # ==================================================
 # WEBSOCKET ENDPOINT
 # ==================================================
 
-import asyncio
-
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     connections.append(ws)
+    log("Dashboard WebSocket connected")
 
     engines = await ENGINE_REGISTRY.list()
 
@@ -145,4 +139,4 @@ async def websocket_endpoint(ws: WebSocket):
     except WebSocketDisconnect:
         if ws in connections:
             connections.remove(ws)
-
+        log("Dashboard WebSocket disconnected")
