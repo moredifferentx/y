@@ -43,7 +43,7 @@ async def main():
     await MEMORY.initialize()
 
     # ---- Register AI engines ----
-    await ENGINE_REGISTRY.register(OllamaEngine(model="llama3"))
+    await ENGINE_REGISTRY.register(OllamaEngine())
     await register_cloud_engines()
 
     # ---- Default routing ----
