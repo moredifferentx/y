@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+discord.py
+psutil
+httpx
+openai
+google-generativeai
+python-dotenv
+cryptography
