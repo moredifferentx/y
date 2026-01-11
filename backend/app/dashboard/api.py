@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from app.core.config import Config
 from app.core.event_bus import EVENT_BUS
 
@@ -10,11 +11,6 @@ from app.plugins import PLUGIN_MANAGER
 from app.cognition import Personality, MoodEngine
 from app.monitoring import log
 
-log(f"Cloud engine enabled: {engine}")
-log(f"Cloud engine disabled: {engine}")
-log("Cloud engines reloaded from .env")
-
-
 # OPTIONAL: enable if you want admin auth enforced
 # from app.dashboard.auth import require_admin
 
@@ -23,7 +19,7 @@ router = APIRouter()
 
 
 # ==================================================
-# CLOUD AI (OPENAI / GEMINI) — EXISTING + EXTENDED
+# CLOUD AI (OPENAI / GEMINI)
 # ==================================================
 
 @router.get("/cloud/status")
@@ -39,11 +35,13 @@ async def cloud_status():
 async def toggle_cloud(engine: str, enabled: bool):
     if not enabled:
         await ENGINE_REGISTRY.unregister(engine)
+        log(f"Cloud engine disabled: {engine}")
         return {"status": "disabled", "engine": engine}
 
     # Reload env + re-register cloud engines
     Config.reload()
-    await register_cloud_engines()
+    register_cloud_engines()  # sync
+    log(f"Cloud engine enabled: {engine}")
 
     return {"status": "enabled", "engine": engine}
 
@@ -51,7 +49,8 @@ async def toggle_cloud(engine: str, enabled: bool):
 @router.post("/cloud/reload")
 async def reload_cloud_engines():
     Config.reload()
-    await register_cloud_engines()
+    register_cloud_engines()  # sync
+    log("Cloud engines reloaded from .env")
     return {"status": "reloaded"}
 
 
@@ -127,6 +126,11 @@ async def override_mood(mood: str):
     )
     return {"status": "updated", "mood": mood}
 
+
+# ==================================================
+# MONITORING
+# ==================================================
+
 from app.monitoring import (
     get_hardware_stats,
     collect_engine_metrics,
@@ -134,19 +138,21 @@ from app.monitoring import (
     health_check,
 )
 
-# ================= MONITORING =================
 
 @router.get("/monitoring/hardware")
 async def monitoring_hardware():
     return get_hardware_stats()
 
+
 @router.get("/monitoring/metrics")
 async def monitoring_metrics():
     return await collect_engine_metrics()
 
+
 @router.get("/monitoring/health")
 async def monitoring_health():
     return await health_check()
+
 
 @router.get("/monitoring/logs")
 async def monitoring_logs():

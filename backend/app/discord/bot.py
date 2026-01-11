@@ -14,85 +14,65 @@ from app.memory import MEMORY
 from app.core.config import Config
 from app.monitoring import log
 
-log("Discord bot started")
-log(f"Message received from {message.author.id}")
-log(f"Failed to generate response for user {message.author.id}")
-
-
-
-INTENTS = discord.Intents.default()
-INTENTS.message_content = True
-
 
 class DiscordBot(commands.Bot):
     def __init__(self):
+        intents = discord.Intents.default()
+        intents.message_content = True
+
         super().__init__(
-            command_prefix="!",
-            intents=INTENTS,
+            command_prefix=Config.DISCORD_PREFIX,
+            intents=intents,
         )
 
-        # Cognition components (singleton per bot)
+        self.context_manager = ContextManager(MEMORY)
         self.personality = Personality()
         self.mood = MoodEngine()
-        self.emotion_model = EmotionModel()
+        self.emotion = EmotionModel()
         self.expression = ExpressionEngine()
         self.reflection = SelfReflection()
 
     async def setup_hook(self):
-        await self.tree.sync()
+        log("Discord bot setup complete")
 
     async def on_ready(self):
-        print(f"[Discord] Logged in as {self.user}")
+        log(f"Logged in as {self.user} (ID: {self.user.id})")
 
     async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
 
-        # Emotion inference
-        emotions = self.emotion_model.infer(message.content)
-        dominant = max(emotions, key=emotions.get, default=None)
-        if dominant:
-            self.mood.update_from_emotion(dominant, emotions[dominant])
+        log(f"Message received from {message.author.id}")
 
-        # Memory fetch
-        user_memory = await MEMORY.user.fetch(str(message.author.id))
-        server_memory = (
-            await MEMORY.server.fetch(str(message.guild.id))
-            if message.guild
-            else []
-        )
+        try:
+            emotions = self.emotion.analyze(message.content)
+            self.mood.update(emotions)
 
-        # Build AI context
-        context = ContextManager.build(
-            memory={
-                "user": user_memory,
-                "server": server_memory,
-            },
-            personality={
-                "traits": self.personality.snapshot(),
-                "style": self.personality.style_hint(),
-            },
-            mood=self.mood.snapshot(),
-        )
-
-        async with message.channel.typing():
-            await self.expression.typing_delay()
+            context = self.context_manager.build_context(
+                user_id=str(message.author.id),
+                content=message.content,
+            )
 
             response = await ENGINE_ROUTER.generate(
                 prompt=message.content,
                 context=context,
+                mood=self.mood.current,
+                personality=self.personality.current,
             )
 
-        # Expression shaping
-        emoji = self.expression.emoji_for_mood(self.mood.current)
-        final = f"{response} {emoji}".strip()
+            emoji = self.expression.emoji_for_mood(self.mood.current)
+            final = f"{response} {emoji}".strip()
 
-        for chunk in self.expression.split_message(final):
-            await message.reply(chunk)
+            for chunk in self.expression.split_message(final):
+                await message.reply(chunk)
 
-        # Self reflection
-        await self.reflection.reflect(
-            user_id=str(message.author.id),
-            content=message.content,
-            emotion_scores=emotions,
-        )
+            await self.reflection.reflect(
+                user_id=str(message.author.id),
+                content=message.content,
+                emotion_scores=emotions,
+            )
+
+        except Exception as e:
+            log(f"Failed to generate response for user {message.author.id}: {e}")
+
+        await self.process_commands(message)

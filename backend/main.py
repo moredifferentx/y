@@ -12,6 +12,7 @@ from app.ai.engines.ollama.engine import OllamaEngine
 from app.ai.engine_registry import ENGINE_REGISTRY
 
 from app.dashboard import dashboard_api, websocket_endpoint
+from app.monitoring import log
 
 
 # ==================================================
@@ -29,8 +30,11 @@ app.add_api_websocket_route("/ws/dashboard", websocket_endpoint)
 # ==================================================
 
 async def start_discord_bot():
-    bot = DiscordBot()
-    await bot.start(Config.get("DISCORD_BOT_TOKEN"))
+    try:
+        bot = DiscordBot()
+        await bot.start(Config.get("DISCORD_TOKEN"))
+    except Exception as e:
+        log(f"[discord] Bot crashed: {e}")
 
 
 # ==================================================
@@ -44,7 +48,11 @@ async def main():
 
     # ---- Register AI engines ----
     await ENGINE_REGISTRY.register(OllamaEngine())
-    await register_cloud_engines()
+
+    try:
+        register_cloud_engines()  # <-- SYNC, NOT async
+    except Exception as e:
+        log(f"[ai] Cloud engine registration failed: {e}")
 
     # ---- Default routing ----
     await ENGINE_ROUTER.set_active("ollama")
