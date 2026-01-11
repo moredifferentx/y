@@ -157,9 +157,12 @@ OPENAI_API_KEY=
 GEMINI_API_KEY=
 
 3️⃣ Start everything
+chmod +x scripts/*.sh
 ./start.sh
 
-
+TO GET ENCRYPTION KEY (ONE TIME )
+python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+ 
 That’s it.
 
 Backend starts on http://localhost:8000
